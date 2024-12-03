@@ -16,11 +16,12 @@ class LayoutDetectionTask(BaseTask):
             result_path (str): Path to save the prediction results.
 
         Returns:
-            list: List of prediction results.
+            list: List of prediction results as dictionaries.
         """
         images = self.load_images(input_data)
         # Perform detection
-        return self.model.predict(images, result_path)
+        results = self.model.predict(images, result_path)
+        return [result.to_dict() for result in results]
 
     def predict_pdfs(self, input_data, result_path):
         """
@@ -31,8 +32,9 @@ class LayoutDetectionTask(BaseTask):
             result_path (str): Path to save the prediction results.
 
         Returns:
-            list: List of prediction results.
+            list: List of prediction results as dictionaries.
         """
         pdf_images = self.load_pdf_images(input_data)
         # Perform detection
-        return self.model.predict(list(pdf_images.values()), result_path, list(pdf_images.keys()))
+        results = self.model.predict(list(pdf_images.values()), result_path, list(pdf_images.keys()))
+        return [result.to_dict() for result in results]
