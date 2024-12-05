@@ -9,6 +9,7 @@ from PIL import Image
 import unimernet.tasks as tasks
 from unimernet.common.config import Config
 from unimernet.processors import load_processor
+import torch.nn.utils.prune as prune
 
 from pdf_extract_kit.registry import MODEL_REGISTRY
 
@@ -40,10 +41,26 @@ class FormulaRecognitionUniMERNet:
             task = tasks.setup_task(cfg)
             model = task.build_model(cfg).to(self.device)
             vis_processor = load_processor('formula_image_eval', cfg.config.datasets.formula_rec_eval.vis_processor.eval)
+            
+            # Apply pruning to the model
+            self.apply_pruning(model)
+            
             return model, vis_processor
         except Exception as e:
             logging.error(f"Error loading model and processor: {e}")
             raise
+
+    def apply_pruning(self, model):
+        """
+        Apply pruning to the model layers.
+
+        Args:
+            model (torch.nn.Module): The model to be pruned.
+        """
+        for name, module in model.named_modules():
+            if isinstance(module, torch.nn.Linear) or isinstance(module, torch.nn.Conv2d):
+                prune.l1_unstructured(module, name='weight', amount=0.4)
+                prune.remove(module, 'weight')
     
     def predict(self, images, result_path):
         results = []
